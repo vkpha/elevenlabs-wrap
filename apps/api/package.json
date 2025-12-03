@@ -1,0 +1,27 @@
+{
+  "name": "@elevenlabs-wrap/api",
+  "version": "1.0.0",
+  "description": "Backend-for-frontend that wraps ElevenLabs music generation and listening stats sources",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "@elevenlabs/elevenlabs-js": "^2.26.0",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-session": "^1.18.2",
+    "fluent-ffmpeg": "^2.1.3"
+  },
+  "keywords": [
+    "elevenlabs",
+    "wrapped",
+    "spotify",
+    "api",
+    "music"
+  ]
+}

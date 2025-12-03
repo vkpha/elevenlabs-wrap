@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automated Age Guesser</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin-bottom: 40px;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 18px 30px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      margin-top: 15px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .progress-section {
+      margin-top: 30px;
+    }
+
+    .progress-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .progress-icon {
+      font-size: 2rem;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .progress-content {
+      flex: 1;
+    }
+
+    .progress-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .progress-desc {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .progress-status {
+      font-size: 2rem;
+    }
+
+    .status-pending { opacity: 0.3; }
+    .status-loading { animation: pulse 1.5s ease-in-out infinite; }
+    .status-complete { color: #1DB954; }
+    .status-error { color: #ff4444; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top: 3px solid #fff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .result-card {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 30px;
+      border-radius: 15px;
+      margin-top: 30px;
+    }
+
+    .result-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .result-item {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .result-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 5px;
+    }
+
+    .result-value {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .result-value.big {
+      font-size: 3rem;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .download-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      margin-top: 20px;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .error-message {
+      background: rgba(255, 68, 68, 0.2);
+      border: 2px solid #ff4444;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>🎂 Age Guesser</h1>
+      <p class="subtitle">Automated Spotify Music Analysis</p>
+
+      <!-- Login Section -->
+      <div id="login-section">
+        <a href="http://127.0.0.1:3001/auth/login?redirect=auto-flow" class="btn btn-primary">
+          🔐 Login with Spotify & Start Analysis
+        </a>
+      </div>
+
+      <!-- Processing Section -->
+      <div id="processing-section" class="hidden">
+        <div class="progress-section">
+          <div class="progress-item">
+            <div class="progress-icon">📊</div>
+            <div class="progress-content">
+              <div class="progress-title">Fetching Spotify Data</div>
+              <div class="progress-desc">Getting your top artists, tracks, and recent plays</div>
+            </div>
+            <div class="progress-status" id="status-spotify">⏳</div>
+          </div>
+
+          <div class="progress-item">
+            <div class="progress-icon">💾</div>
+            <div class="progress-content">
+              <div class="progress-title">Saving Data Files</div>
+              <div class="progress-desc">Creating JSON files for analysis</div>
+            </div>
+            <div class="progress-status" id="status-save">⏳</div>
+          </div>
+
+          <div class="progress-item">
+            <div class="progress-icon">🤖</div>
+            <div class="progress-content">
+              <div class="progress-title">AI Analysis</div>
+              <div class="progress-desc">Claude is analyzing your music taste</div>
+            </div>
+            <div class="progress-status" id="status-ai">⏳</div>
+          </div>
+        </div>
+
+        <div id="error-section" class="hidden">
+          <div class="error-message" id="error-message"></div>
+          <button onclick="location.reload()" class="btn btn-secondary">Try Again</button>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div id="results-section" class="hidden">
+        <div class="result-card">
+          <div class="result-title">🎉 Analysis Complete!</div>
+
+          <div class="result-value big" id="result-age">25 years old</div>
+
+          <div class="result-item">
+            <div class="result-label">📊 Age Range</div>
+            <div class="result-value" id="result-range">18-24</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">✅ Confidence</div>
+            <div class="result-value" id="result-confidence">85%</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">🔍 Why?</div>
+            <div class="result-value" id="result-reasoning" style="font-size: 1rem; line-height: 1.6;"></div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">🎵 Music Generation</div>
+            <div class="result-value" id="result-generation">Gen Z Pop Enthusiast</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">💡 Insights</div>
+            <div class="result-value" id="result-insights" style="font-size: 1rem; line-height: 1.6;"></div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">🎸 Top 5 Genres</div>
+            <div class="result-value" id="result-genres" style="font-size: 1rem;"></div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">🎼 Music Generation Prompts</div>
+            <div class="result-value" id="result-prompts" style="font-size: 0.9rem; line-height: 1.8;"></div>
+          </div>
+
+          <button onclick="downloadResults()" class="btn download-btn">
+            💾 Download Results as JSON
+          </button>
+
+          <button onclick="generateMusic()" class="btn btn-primary" id="generate-music-btn">
+            🎵 Generate 8 Preview Songs (20s each)
+          </button>
+
+          <button onclick="location.reload()" class="btn btn-secondary">
+            🔄 Analyze Again
+          </button>
+
+          <div id="music-generation-section" class="hidden" style="margin-top: 30px;">
+            <div class="result-title">🎵 Generating Music...</div>
+            <div id="music-progress" style="margin-top: 20px;"></div>
+            <div id="music-results" style="margin-top: 20px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:3001';
+    let analysisResults = null;
+
+    // Check if user just logged in
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      startAutomatedFlow();
+    }
+
+    async function startAutomatedFlow() {
+      document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('processing-section').classList.remove('hidden');
+
+      try {
+        // Step 1: Fetch Spotify Data
+        await updateStatus('spotify', 'loading');
+        await Promise.all([
+          fetchAndSave('/stats/top-artists?time_range=short_term&limit=50', '/stats/save-top-artists?time_range=short_term&limit=50'),
+          fetchAndSave('/stats/top-tracks?time_range=short_term&limit=50', '/stats/save-top-tracks?time_range=short_term&limit=50'),
+          fetchAndSave('/stats/recently-played?limit=50', '/stats/save-recently-played?limit=50')
+        ]);
+        await updateStatus('spotify', 'complete');
+
+        // Step 2: Data is already saved in Step 1
+        await updateStatus('save', 'complete');
+
+        // Step 3: AI Analysis
+        await updateStatus('ai', 'loading');
+        const aiResponse = await fetch(`${API_BASE}/ai/guess-music-age`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        if (!aiResponse.ok) {
+          throw new Error('AI analysis failed');
+        }
+
+        const aiData = await aiResponse.json();
+        await updateStatus('ai', 'complete');
+
+        // Show Results
+        displayResults(aiData);
+
+      } catch (error) {
+        console.error('Flow error:', error);
+        showError(error.message || 'Something went wrong. Please try again.');
+      }
+    }
+
+    async function fetchAndSave(fetchEndpoint, saveEndpoint) {
+      // Just save directly (which fetches internally)
+      const response = await fetch(`${API_BASE}${saveEndpoint}`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save data from ${saveEndpoint}`);
+      }
+
+      return response.json();
+    }
+
+    async function updateStatus(step, status) {
+      const element = document.getElementById(`status-${step}`);
+      element.className = 'progress-status';
+
+      if (status === 'pending') {
+        element.classList.add('status-pending');
+        element.textContent = '⏳';
+      } else if (status === 'loading') {
+        element.classList.add('status-loading');
+        element.textContent = '⏳';
+      } else if (status === 'complete') {
+        element.classList.add('status-complete');
+        element.textContent = '✅';
+      } else if (status === 'error') {
+        element.classList.add('status-error');
+        element.textContent = '❌';
+      }
+
+      // Small delay for visual effect
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    function displayResults(data) {
+      analysisResults = data;
+
+      document.getElementById('processing-section').classList.add('hidden');
+      document.getElementById('results-section').classList.remove('hidden');
+
+      if (data.success && data.analysis) {
+        const analysis = data.analysis;
+
+        // Age - just the number
+        document.getElementById('result-age').textContent = analysis.estimatedAge;
+        document.getElementById('result-range').textContent = analysis.ageRange;
+        document.getElementById('result-confidence').textContent = `${analysis.confidence}%`;
+
+        // Format reasoning as a list
+        const reasoningHtml = analysis.reasoning.map(r => `• ${r}`).join('<br>');
+        document.getElementById('result-reasoning').innerHTML = reasoningHtml;
+
+        document.getElementById('result-generation').textContent = analysis.musicGeneration;
+        document.getElementById('result-insights').textContent = analysis.insights;
+
+        // Top genres
+        if (analysis.topGenres) {
+          const genresHtml = analysis.topGenres.map((g, i) => `${i + 1}. ${g}`).join('<br>');
+          document.getElementById('result-genres').innerHTML = genresHtml;
+        }
+
+        // Music prompts
+        if (analysis.musicPrompts) {
+          const promptsHtml = analysis.musicPrompts
+            .map((p, i) => {
+              // Handle both string prompts and {title, prompt} objects
+              if (typeof p === 'object' && p.title && p.prompt) {
+                return `<strong>${i + 1}. "${p.title}"</strong><br><span style="opacity: 0.8;">${p.prompt}</span>`;
+              } else {
+                return `<strong>${i + 1}.</strong> ${p}`;
+              }
+            })
+            .join('<br><br>');
+          document.getElementById('result-prompts').innerHTML = promptsHtml;
+        }
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('error-section').classList.remove('hidden');
+      document.getElementById('error-message').textContent = message;
+
+      updateStatus('spotify', 'error');
+      updateStatus('save', 'error');
+      updateStatus('ai', 'error');
+    }
+
+    function downloadResults() {
+      if (!analysisResults) return;
+
+      const dataStr = JSON.stringify(analysisResults, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `age-analysis-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    async function generateMusic() {
+      if (!analysisResults || !analysisResults.analysis || !analysisResults.analysis.musicPrompts) {
+        alert('No music prompts found. Please run the analysis first.');
+        return;
+      }
+
+      const btn = document.getElementById('generate-music-btn');
+      btn.disabled = true;
+      btn.textContent = '🎵 Generating...';
+
+      const section = document.getElementById('music-generation-section');
+      const progress = document.getElementById('music-progress');
+      const results = document.getElementById('music-results');
+
+      section.classList.remove('hidden');
+      progress.innerHTML = '<div class="spinner"></div><p>Starting music generation...</p>';
+
+      try {
+        const response = await fetch(`${API_BASE}/music/generate-from-analysis`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            analysis: analysisResults.analysis
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to generate music');
+        }
+
+        // Handle SSE stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.type === 'complete') {
+                // Final results
+                progress.innerHTML = `<p>✅ Generation complete: ${data.successfulTracks}/${data.totalTracks} tracks successful</p>`;
+
+                const tracksHtml = data.tracks.map((track, i) => {
+                  if (track.success) {
+                    const promptObj = analysisResults.analysis.musicPrompts[i];
+                    const title = track.title || (typeof promptObj === 'object' ? promptObj.title : null);
+                    const prompt = typeof promptObj === 'object' ? promptObj.prompt : promptObj;
+
+                    return `<div style="padding: 15px; background: rgba(0,255,0,0.1); border-radius: 8px; margin: 10px 0; border: 1px solid rgba(0,255,0,0.2);">
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                          <strong>✅ ${title || `Track ${i + 1}`}</strong>
+                          <span style="opacity: 0.7; font-size: 0.9em;">(${track.duration}s preview)</span>
+                          <br>
+                          <small style="opacity: 0.8;">${track.filename}</small>
+                        </div>
+                        <button
+                          onclick="expandTrack(${i}, '${prompt.replace(/'/g, "\\'")}', '${title ? title.replace(/'/g, "\\'") : ''}')"
+                          class="btn btn-secondary"
+                          id="expand-btn-${i}"
+                          style="padding: 8px 16px; font-size: 0.9rem; width: auto; margin-left: 10px;">
+                          ⏩ Expand to 120s
+                        </button>
+                      </div>
+                    </div>`;
+                  } else {
+                    return `<div style="padding: 10px; background: rgba(255,0,0,0.1); border-radius: 8px; margin: 5px 0;">
+                      ❌ Track ${i + 1}: ${track.error}
+                    </div>`;
+                  }
+                }).join('');
+
+                results.innerHTML = tracksHtml;
+                btn.textContent = '✅ Previews Generated!';
+              } else {
+                // Progress update
+                progress.innerHTML = `<p>Generating track ${data.current}/${data.total}...</p>`;
+              }
+            }
+          }
+        }
+
+      } catch (error) {
+        console.error('Music generation error:', error);
+        progress.innerHTML = `<div class="error-message">❌ ${error.message}</div>`;
+        btn.disabled = false;
+        btn.textContent = '🎵 Try Again';
+      }
+    }
+
+    async function expandTrack(trackIndex, prompt, title = '') {
+      const btn = document.getElementById(`expand-btn-${trackIndex}`);
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳ Expanding...';
+
+      try {
+        const response = await fetch(`${API_BASE}/music/expand-track`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            prompt: prompt,
+            trackIndex: trackIndex
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to expand track');
+        }
+
+        // Handle SSE stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.type === 'complete') {
+                // Track expanded successfully
+                btn.textContent = '✅ Expanded!';
+                btn.style.background = 'rgba(0,255,0,0.3)';
+
+                // Update the track display
+                const trackDiv = btn.closest('div[style*="padding: 15px"]');
+                const trackInfo = trackDiv.querySelector('div strong');
+                const displayTitle = title || `Track ${trackIndex + 1}`;
+                trackInfo.innerHTML = `✅ ${displayTitle} <span style="color: #1DB954;">(120s full track)</span>`;
+
+                const filename = trackDiv.querySelector('small');
+                filename.textContent = data.result.filename;
+              }
+            }
+          }
+        }
+
+      } catch (error) {
+        console.error('Track expansion error:', error);
+        btn.textContent = '❌ Failed';
+        btn.disabled = false;
+        alert(`Failed to expand track: ${error.message}`);
+      }
+    }
+  </script>
+</body>
+</html>
