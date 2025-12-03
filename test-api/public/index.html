@@ -209,6 +209,7 @@
 
     <div id="authenticated-section" class="auth-section hidden">
       <button onclick="fetchTracks()" class="btn btn-primary">Load My Recent Tracks</button>
+      <button onclick="saveTracks()" class="btn btn-secondary">Save to JSON</button>
       <button onclick="logout()" class="btn btn-secondary">Logout</button>
     </div>
 
@@ -328,6 +329,24 @@
       successDiv.textContent = message;
       successDiv.classList.remove('hidden');
       setTimeout(() => successDiv.classList.add('hidden'), 5000);
+    }
+
+    async function saveTracks() {
+      try {
+        const response = await fetch('/api/save-tracks', {
+          method: 'POST'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save tracks');
+        }
+
+        const data = await response.json();
+        showSuccess(`Successfully saved ${data.trackCount} tracks to ${data.filename}`);
+      } catch (error) {
+        showError('Failed to save tracks. Please try again.');
+        console.error('Error saving tracks:', error);
+      }
     }
 
     function logout() {

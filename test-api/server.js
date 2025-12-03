@@ -3,6 +3,7 @@ import express from 'express';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { writeFile } from 'fs/promises';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -146,6 +147,41 @@ async function refreshAccessToken() {
 // Check auth status
 app.get('/api/auth-status', (req, res) => {
   res.json({ authenticated: !!accessToken });
+});
+
+// Save recently played tracks to JSON file
+app.post('/api/save-tracks', async (req, res) => {
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    const response = await axios.get(
+      'https://api.spotify.com/v1/me/player/recently-played?limit=50',
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `recently-played-${timestamp}.json`;
+    const filepath = join(__dirname, filename);
+
+    await writeFile(filepath, JSON.stringify(response.data, null, 2));
+
+    res.json({
+      success: true,
+      filename: filename,
+      trackCount: response.data.items.length
+    });
+  } catch (error) {
+    console.error('Error saving tracks:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to save tracks'
+    });
+  }
 });
 
 app.listen(PORT, () => {
