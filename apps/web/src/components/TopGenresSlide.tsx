@@ -28,7 +28,7 @@ export function TopGenresSlide({ genres }: TopGenresSlideProps) {
             <div className="text-6xl w-16 text-gray-500">
               {index + 1}
             </div>
-            <div className="flex-1 border-b-2 border-white pb-4">
+            <div className="flex-1 border-b-2 border-orange pb-4">
               <p className="text-xl">{genre}</p>
             </div>
           </motion.div>

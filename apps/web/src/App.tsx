@@ -17,6 +17,7 @@ import bg5 from '../../../assets/eleven_labs_background_5.mp4';
 import bg6 from '../../../assets/eleven_labs_background_6.mp4';
 import bg7 from '../../../assets/eleven_labs_background_7.mp4';
 import bg8 from '../../../assets/eleven_labs_background_8.mp4';
+import { LoginPage } from './components/LoginPage';
 
 const mockData = {
   genreCount: 127,
@@ -43,9 +44,13 @@ const mockData = {
 
 export default function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [isNavigating, setIsNavigating] = useState(false);
   const touchStartY = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [showLogin, setShowLogin] = useState(
+    typeof window !== 'undefined' && window.location.hash === '#login'
+  );
 
   const slides = [
     <IntroSlide genreCount={mockData.genreCount} />,
@@ -59,6 +64,7 @@ export default function App() {
   ];
 
   const videoSources = [bg1, bg2, bg3, bg4, bg5, bg6, bg7, bg8];
+  const textPalette = ['#39ff14', '#ff914d', '#7dd3ff', '#a855f7', '#ff5fa0', '#ff6b6b', '#1f4b99', '#0f7b3f'];
 
   const goToSlide = (index: number) => {
     if (index < 0 || index > slides.length - 1) return;
@@ -67,18 +73,27 @@ export default function App() {
 
   const nextSlide = () => {
     if (currentSlide < slides.length - 1) {
+      setDirection(1);
       setCurrentSlide(prev => prev + 1);
     }
   };
 
   const prevSlide = () => {
     if (currentSlide > 0) {
+      setDirection(-1);
       setCurrentSlide(prev => prev - 1);
     }
   };
 
   useEffect(() => {
+    const handleHash = () => setShowLogin(window.location.hash === '#login');
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  useEffect(() => {
     const el = containerRef.current;
+    if (showLogin) return;
     if (!el) return;
 
     const handleWheel = (e: WheelEvent) => {
@@ -106,41 +121,69 @@ export default function App() {
       touchStartY.current = null;
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isNavigating) return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setIsNavigating(true);
+        nextSlide();
+        setTimeout(() => setIsNavigating(false), 650);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setIsNavigating(true);
+        prevSlide();
+        setTimeout(() => setIsNavigating(false), 650);
+      }
+    };
+
     el.addEventListener('wheel', handleWheel, { passive: false });
     el.addEventListener('touchstart', handleTouchStart, { passive: true });
     el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       el.removeEventListener('wheel', handleWheel);
       el.removeEventListener('touchstart', handleTouchStart);
       el.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isNavigating, currentSlide]);
+  }, [isNavigating, currentSlide, showLogin]);
+
+  if (showLogin) {
+    return <LoginPage />;
+  }
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-black text-white flex items-center justify-center overflow-hidden relative">
+    <div ref={containerRef} className="min-h-screen bg-white text-white flex items-center justify-center overflow-hidden relative">
       <BackgroundAsset />
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <video
-          key={currentSlide}
-          src={videoSources[currentSlide % videoSources.length]}
-          className="w-full h-full object-cover opacity-80"
-          autoPlay
-          loop
-          muted
-          playsInline
-        />
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.video
+            key={currentSlide}
+            custom={direction}
+            src={videoSources[currentSlide % videoSources.length]}
+            className="w-full h-full object-cover opacity-80 absolute inset-0"
+            autoPlay
+            muted
+            playsInline
+            initial={{ x: direction > 0 ? '100%' : '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: direction > 0 ? '-100%' : '100%' }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
+          />
+        </AnimatePresence>
         <div className="absolute inset-0 bg-black/40" />
       </div>
       <div className="w-full max-w-2xl h-screen relative z-10">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentSlide}
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -100 }}
+            exit={{ opacity: 1, x: -30 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="absolute inset-0 flex items-center justify-center p-8"
+            className="absolute inset-0 flex items-center justify-center p-8 slide-block"
+            style={{ color: textPalette[currentSlide % textPalette.length], fontWeight: 700 }}
           >
             {slides[currentSlide]}
           </motion.div>
@@ -153,7 +196,7 @@ export default function App() {
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-2 h-2 rounded-full transition-all ${
-                index === currentSlide ? 'bg-white w-8' : 'bg-white/30'
+                index === currentSlide ? 'bg-black w-8' : 'bg-black/30'
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -164,8 +207,8 @@ export default function App() {
         <button
           onClick={prevSlide}
           disabled={currentSlide === 0}
-          className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border-2 border-white flex items-center justify-center transition-opacity ${
-            currentSlide === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'
+          className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border-2 border-black bg-white/80 text-black flex items-center justify-center transition-opacity ${
+            currentSlide === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-90 hover:opacity-100'
           }`}
           aria-label="Previous slide"
         >
@@ -174,8 +217,8 @@ export default function App() {
         <button
           onClick={nextSlide}
           disabled={currentSlide === slides.length - 1}
-          className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border-2 border-white flex items-center justify-center transition-opacity ${
-            currentSlide === slides.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'
+          className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border-2 border-black bg-white/80 text-black flex items-center justify-center transition-opacity ${
+            currentSlide === slides.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-90 hover:opacity-100'
           }`}
           aria-label="Next slide"
         >

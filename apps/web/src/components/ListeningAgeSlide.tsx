@@ -24,7 +24,7 @@ export function ListeningAgeSlide({ age }: ListeningAgeSlideProps) {
         transition={{ delay: 0.6, duration: 0.8, type: 'spring', bounce: 0.4 }}
         className="relative"
       >
-        <div className="w-64 h-64 rounded-full border-8 border-white flex items-center justify-center">
+        <div className="w-64 h-64 rounded-full border-8 bg-white border-white flex items-center justify-center">
           <div className="text-center">
             <div className="text-7xl mb-2">{age}</div>
             <p className="text-xl text-gray-300">years old</p>
