@@ -1,0 +1,21 @@
+# Node/Vite artifacts
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-lock.yaml
+package-lock.json
+
+# Build outputs
+/dist
+/build
+apps/web/build
+apps/web/dist
+
+# Editor/OS
+.DS_Store
+*.swp
+*.swo
+.idea
+.vscode
