@@ -52,19 +52,19 @@ export default function App() {
     typeof window !== 'undefined' && window.location.hash === '#login'
   );
 
-  const slides = [
-    <IntroSlide genreCount={mockData.genreCount} />,
-    <TopGenresSlide genres={mockData.topGenres} />,
-    <ListeningAgeSlide age={mockData.listeningAge} />,
-    <GuessTopSongSlide songTitle={mockData.topSong} />,
-    <TopSongsSlide songs={mockData.topSongs} />,
-    <AlbumsCountSlide count={mockData.albumCount} />,
-    <TopAlbumSlide album={mockData.topAlbum} />,
-    <TopAlbumsSlide albums={mockData.topAlbums} />
-  ];
-
   const videoSources = [bg1, bg2, bg3, bg4, bg5, bg6, bg7, bg8];
   const textPalette = ['#39ff14', '#ff914d', '#7dd3ff', '#a855f7', '#ff5fa0', '#ff6b6b', '#1f4b99', '#0f7b3f'];
+
+  const slides = [
+    <IntroSlide genreCount={mockData.genreCount} bgColor={textPalette[0]} />,
+    <TopGenresSlide genres={mockData.topGenres} bgColor={textPalette[1]} />,
+    <ListeningAgeSlide age={mockData.listeningAge} bgColor={textPalette[2]} />,
+    <GuessTopSongSlide songTitle={mockData.topSong} bgColor={textPalette[3]} />,
+    <TopSongsSlide songs={mockData.topSongs} bgColor={textPalette[4]} />,
+    <AlbumsCountSlide count={mockData.albumCount} bgColor={textPalette[5]} />,
+    <TopAlbumSlide album={mockData.topAlbum} bgColor={textPalette[6]} />,
+    <TopAlbumsSlide albums={mockData.topAlbums} bgColor={textPalette[7]} />
+  ];
 
   const goToSlide = (index: number) => {
     if (index < 0 || index > slides.length - 1) return;
@@ -154,21 +154,28 @@ export default function App() {
   }
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-white text-white flex items-center justify-center overflow-hidden relative">
-      <BackgroundAsset />
-      <div className="absolute inset-0 -z-10 overflow-hidden">
+    <div ref={containerRef} className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      <div className="fixed inset-0 w-screen h-screen -z-10 overflow-hidden">
         <AnimatePresence initial={false} custom={direction}>
           <motion.video
             key={currentSlide}
             custom={direction}
             src={videoSources[currentSlide % videoSources.length]}
-            className="w-full h-full object-cover opacity-80 absolute inset-0"
+            className="object-cover opacity-80 absolute"
+            style={{
+              width: '150vw',
+              height: '150vh',
+              minWidth: '150vw',
+              minHeight: '150vh',
+              top: '50%',
+              left: '50%'
+            }}
             autoPlay
             muted
             playsInline
-            initial={{ x: direction > 0 ? '100%' : '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: direction > 0 ? '-100%' : '100%' }}
+            initial={{ x: direction > 0 ? 'calc(-50% + 100%)' : 'calc(-50% - 100%)', y: '-50%' }}
+            animate={{ x: '-50%', y: '-50%' }}
+            exit={{ x: direction > 0 ? 'calc(-50% - 100%)' : 'calc(-50% + 100%)', y: '-50%' }}
             transition={{ duration: 0.6, ease: 'easeInOut' }}
           />
         </AnimatePresence>
@@ -183,7 +190,6 @@ export default function App() {
             exit={{ opacity: 1, x: -30 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
             className="absolute inset-0 flex items-center justify-center p-8 slide-block"
-            style={{ color: textPalette[currentSlide % textPalette.length], fontWeight: 700 }}
           >
             {slides[currentSlide]}
           </motion.div>
@@ -202,28 +208,6 @@ export default function App() {
             />
           ))}
         </div>
-
-        {/* Arrow navigation */}
-        <button
-          onClick={prevSlide}
-          disabled={currentSlide === 0}
-          className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border-2 border-black bg-white/80 text-black flex items-center justify-center transition-opacity ${
-            currentSlide === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-90 hover:opacity-100'
-          }`}
-          aria-label="Previous slide"
-        >
-          ←
-        </button>
-        <button
-          onClick={nextSlide}
-          disabled={currentSlide === slides.length - 1}
-          className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border-2 border-black bg-white/80 text-black flex items-center justify-center transition-opacity ${
-            currentSlide === slides.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-90 hover:opacity-100'
-          }`}
-          aria-label="Next slide"
-        >
-          →
-        </button>
       </div>
     </div>
   );
