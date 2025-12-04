@@ -7,7 +7,7 @@ import { GuessTopSongSlide } from './components/GuessTopSongSlide';
 import { TopSongsSlide } from './components/TopSongsSlide';
 import { AlbumsCountSlide } from './components/AlbumsCountSlide';
 import { TopAlbumSlide } from './components/TopAlbumSlide';
-import { TopAlbumsSlide } from './components/TopAlbumsSlide';
+import { InsightsSlide } from './components/InsightsSlide';
 import { BackgroundAsset } from './components/BackgroundAsset';
 import bg1 from '../../../assets/eleven_labs_background_1.mp4';
 import bg2 from '../../../assets/eleven_labs_background_2.mp4';
@@ -38,13 +38,9 @@ const parseWrappedData = (analysis: any) => {
       ],
       albumCount: 89,
       topAlbum: 'Synthetic Emotions',
-      topAlbums: [
-        { title: 'Synthetic Emotions', artist: 'AI Narrator', plays: 5234 },
-        { title: 'Voice Chronicles', artist: 'Digital Storyteller', plays: 4892 },
-        { title: 'Spoken Word Dreams', artist: 'Neural Voice', plays: 4156 },
-        { title: 'Audio Landscapes', artist: 'Generated Voices', plays: 3847 },
-        { title: 'The Infinite Library', artist: 'AI Ensemble', plays: 3621 }
-      ]
+      insights: 'Your music taste is unique and diverse!',
+      musicGeneration: 'Audio Storyteller',
+      reasoning: ['You have an eclectic taste in audio content.', 'Your listening patterns suggest a creative mind.']
     };
   }
 
@@ -63,18 +59,9 @@ const parseWrappedData = (analysis: any) => {
     })),
     albumCount: recommendedAlbums.length + 1, // +1 for personal album
     topAlbum: analysis.personalAlbumTitle || 'Your Personal Album',
-    topAlbums: [
-      {
-        title: analysis.personalAlbumTitle || 'Your Personal Album',
-        artist: analysis.personalAlbumArtist || 'Your AI',
-        plays: 5000
-      },
-      ...recommendedAlbums.slice(0, 4).map((album: any, index: number) => ({
-        title: album.title,
-        artist: 'Your AI',
-        plays: 4500 - (index * 300)
-      }))
-    ]
+    insights: analysis.insights || 'Your music taste is unique and diverse!',
+    musicGeneration: analysis.musicGeneration || 'Music Explorer',
+    reasoning: analysis.reasoning || ['You have an eclectic taste in music.']
   };
 };
 
@@ -109,7 +96,12 @@ export default function App() {
     <TopSongsSlide songs={slideData.topSongs} bgColor={textPalette[4]} />,
     <AlbumsCountSlide count={slideData.albumCount} bgColor={textPalette[5]} />,
     <TopAlbumSlide album={slideData.topAlbum} bgColor={textPalette[6]} />,
-    <TopAlbumsSlide albums={slideData.topAlbums} bgColor={textPalette[7]} />
+    <InsightsSlide
+      insights={slideData.insights}
+      musicGeneration={slideData.musicGeneration}
+      reasoning={slideData.reasoning}
+      bgColor={textPalette[7]}
+    />
   ];
 
   const togglePlayPause = () => {
@@ -426,7 +418,7 @@ export default function App() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white text-black px-6 py-5 rounded-full shadow-lg flex items-center gap-4"
-            style={{ minWidth: '400px', maxWidth: '90%', marginTop: '12px', minHeight: '72px' }}
+            style={{ minWidth: '400px', maxWidth: '90%', marginTop: '24px', minHeight: '72px' }}
           >
             {/* Previous button */}
             <button
