@@ -154,8 +154,7 @@ export default function App() {
   }
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-white flex items-center justify-center overflow-hidden relative">
-      <BackgroundAsset />
+    <div ref={containerRef} className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
       <div className="fixed inset-0 w-screen h-screen -z-10 overflow-hidden">
         <AnimatePresence initial={false} custom={direction}>
           <motion.video
@@ -209,28 +208,6 @@ export default function App() {
             />
           ))}
         </div>
-
-        {/* Arrow navigation */}
-        <button
-          onClick={prevSlide}
-          disabled={currentSlide === 0}
-          className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border-2 border-black bg-white/80 text-black flex items-center justify-center transition-opacity ${
-            currentSlide === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-90 hover:opacity-100'
-          }`}
-          aria-label="Previous slide"
-        >
-          ←
-        </button>
-        <button
-          onClick={nextSlide}
-          disabled={currentSlide === slides.length - 1}
-          className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border-2 border-black bg-white/80 text-black flex items-center justify-center transition-opacity ${
-            currentSlide === slides.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-90 hover:opacity-100'
-          }`}
-          aria-label="Next slide"
-        >
-          →
-        </button>
       </div>
     </div>
   );
