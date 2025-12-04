@@ -1,6 +1,6 @@
 
-  {
-      "name": "Spotify Wrapped Clone Animation",
+{
+      "name": "@elevenlabs-wrap/web",
       "version": "0.1.0",
       "private": true,
       "dependencies": {

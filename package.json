@@ -8,12 +8,14 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:api": "npm run dev --workspace=@elevenlabs-wrap/api",
-    "start:api": "npm start --workspace=@elevenlabs-wrap/api",
+    "dev": "concurrently --names \"API,WEB\" --prefix-colors \"cyan,magenta\" \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm start --workspace=@elevenlabs-wrap/api",
     "dev:web": "npm run dev --workspace=@elevenlabs-wrap/web",
+    "start:api": "npm start --workspace=@elevenlabs-wrap/api",
     "start:web": "npm start --workspace=@elevenlabs-wrap/web"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "cors": "^2.8.5"
   },
   "keywords": [

@@ -24,7 +24,7 @@ router.get('/callback', async (req, res) => {
   const code = req.query.code;
 
   if (!code) {
-    return res.redirect(`${authService.frontendUrl}/?error=no_code`);
+    return res.redirect(`${authService.frontendUrl}/#error=no_code`);
   }
 
   try {
@@ -38,14 +38,14 @@ router.get('/callback', async (req, res) => {
     req.session.save((err) => {
       if (err) {
         console.error('Error saving session:', err);
-        return res.redirect(`${authService.frontendUrl}/?error=session_save_failed`);
+        return res.redirect(`${authService.frontendUrl}/#error=session_save_failed`);
       }
 
-      // Redirect to specific page or default
+      // Redirect to specific page or loading screen
       if (redirectPage) {
         res.redirect(`${authService.frontendUrl}/${redirectPage}.html?success=true`);
       } else {
-        res.redirect(`${authService.frontendUrl}/?success=true`);
+        res.redirect(`${authService.frontendUrl}/#loading`);
       }
     });
   } catch (error) {
@@ -56,7 +56,7 @@ router.get('/callback', async (req, res) => {
     if (redirectPage) {
       res.redirect(`${authService.frontendUrl}/${redirectPage}.html?error=auth_failed`);
     } else {
-      res.redirect(`${authService.frontendUrl}/?error=auth_failed`);
+      res.redirect(`${authService.frontendUrl}/#error=auth_failed`);
     }
   }
 });

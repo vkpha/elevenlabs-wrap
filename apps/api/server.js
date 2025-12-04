@@ -10,7 +10,7 @@ import musicRoutes from './src/routes/musicRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS configuration
+// CORS configuration - only use 127.0.0.1
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://127.0.0.1:3000',
   credentials: true
