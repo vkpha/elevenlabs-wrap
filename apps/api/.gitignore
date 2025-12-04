@@ -1,0 +1,14 @@
+# Data cache (temporary files)
+data/
+.cache/
+
+# Environment variables
+.env
+.env.local
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/

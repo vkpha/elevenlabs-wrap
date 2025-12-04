@@ -1,0 +1,27 @@
+{
+  "name": "elevenlabs-wrap",
+  "version": "1.0.0",
+  "description": "ElevenLabs Wrapped - Year-end listening experience with AI-generated music",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=@elevenlabs-wrap/api",
+    "start:api": "npm start --workspace=@elevenlabs-wrap/api",
+    "dev:web": "npm run dev --workspace=@elevenlabs-wrap/web",
+    "start:web": "npm start --workspace=@elevenlabs-wrap/web"
+  },
+  "devDependencies": {
+    "cors": "^2.8.5"
+  },
+  "keywords": [
+    "elevenlabs",
+    "wrapped",
+    "music",
+    "ai"
+  ],
+  "author": "",
+  "license": "ISC"
+}
