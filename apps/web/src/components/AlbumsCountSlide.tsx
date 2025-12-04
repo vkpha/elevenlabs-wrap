@@ -39,7 +39,7 @@ export function AlbumsCountSlide({ count, bgColor }: AlbumsCountSlideProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9, duration: 0.6 }}
         >
-          <p className="text-3xl text-black font-black">albums this year</p>
+          <p className="text-3xl text-black font-black">albums this month</p>
         </motion.div>
 
         <motion.div

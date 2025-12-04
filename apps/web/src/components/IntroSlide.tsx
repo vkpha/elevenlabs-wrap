@@ -42,7 +42,7 @@ export function IntroSlide({ genreCount, bgColor }: IntroSlideProps) {
             className="mt-8"
           >
             <div className="text-8xl mb-4 text-black font-black">{genreCount}</div>
-            <p className="text-xl text-black font-black">genres listened to</p>
+            <p className="text-xl text-black font-black">genres listened to this month</p>
           </motion.div>
         </div>
 

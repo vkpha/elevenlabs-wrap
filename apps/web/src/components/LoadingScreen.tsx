@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import elevatorMusic from '../../../../assets/elevator_music.mp3';
 
 const API_BASE = 'http://127.0.0.1:3001';
 
@@ -9,10 +10,67 @@ interface LoadingScreenProps {
 
 export function LoadingScreen({ onComplete, forceRegenerate = false }: LoadingScreenProps) {
   const [progress, setProgress] = useState('Initializing...');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [asciiFrame, setAsciiFrame] = useState(0);
 
   useEffect(() => {
+    // Start playing elevator music
+    if (!audioRef.current) {
+      audioRef.current = new Audio(elevatorMusic);
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.3;
+    }
+
+    audioRef.current.play().catch((err: any) => console.error('Failed to play elevator music:', err));
+
+    // Start the data flow
     startDataFlow();
+
+    // Cleanup: stop music when component unmounts
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
   }, []);
+
+  // Animate ASCII art
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAsciiFrame((prev: number) => (prev + 1) % 8);
+    }, 150);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const getAsciiArt = () => {
+    const cols = 80;
+    const rows = 30;
+    const text = 'ELEVEN LABS';
+
+    let output = '';
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        // Calculate if this position should show "ELEVEN LABS"
+        const seed = Math.sin(row * 0.5 + col * 0.3 + asciiFrame * 0.1) * 100;
+        const textAppears = Math.floor(Math.abs(seed)) % 15 === 0;
+
+        if (textAppears && col < cols - text.length) {
+          output += text;
+          col += text.length - 1; // Skip ahead
+        } else {
+          // Fill with random characters that shift
+          const charIndex = (row + col + asciiFrame) % 10;
+          output += charIndex.toString();
+        }
+      }
+      output += '\n';
+    }
+
+    return output;
+  };
 
   const startDataFlow = async () => {
     try {
@@ -42,6 +100,19 @@ export function LoadingScreen({ onComplete, forceRegenerate = false }: LoadingSc
             const trackUrls = tracksData.tracks.map((t: any) => `${API_BASE}${t.url}`);
 
             setProgress('Complete! Loading your wrapped...');
+
+            // Fade out elevator music
+            const fadeOutInterval = setInterval(() => {
+              if (audioRef.current && audioRef.current.volume > 0.05) {
+                audioRef.current.volume = Math.max(0, audioRef.current.volume - 0.05);
+              } else {
+                clearInterval(fadeOutInterval);
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                }
+              }
+            }, 50);
+
             setTimeout(() => onComplete(cachedData.data.analysis, trackUrls), 500);
             return;
           }
@@ -117,8 +188,21 @@ export function LoadingScreen({ onComplete, forceRegenerate = false }: LoadingSc
               const tracksData = await tracksResponse.json();
               const trackUrls = tracksData.tracks.map((t: any) => `${API_BASE}${t.url}`);
 
-              // All done, notify parent
+              // All done, fade out music and notify parent
               setProgress('Complete! Starting your wrapped...');
+
+              // Fade out elevator music
+              const fadeOutInterval = setInterval(() => {
+                if (audioRef.current && audioRef.current.volume > 0.05) {
+                  audioRef.current.volume = Math.max(0, audioRef.current.volume - 0.05);
+                } else {
+                  clearInterval(fadeOutInterval);
+                  if (audioRef.current) {
+                    audioRef.current.pause();
+                  }
+                }
+              }, 50);
+
               setTimeout(() => onComplete(aiData.analysis, trackUrls), 1000);
             } else if (data.current) {
               setProgress(`Generating track ${data.current}/${data.total}...`);
@@ -133,36 +217,57 @@ export function LoadingScreen({ onComplete, forceRegenerate = false }: LoadingSc
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
-      <div className="text-center max-w-lg px-8">
-        <h1 className="text-5xl mb-8" style={{ fontWeight: 700 }}>
-          Generating ElevenLabs Wrapped
-        </h1>
-
-        {/* Animated spinner */}
-        <div className="mb-8 flex justify-center">
-          <div
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center overflow-hidden">
+      <div className="w-full h-screen flex flex-col items-center justify-center">
+        {/* Animated ASCII Art - Full screen of text */}
+        <div className="mb-8 overflow-hidden">
+          <pre
+            className="font-mono text-[6px] sm:text-[8px] leading-none"
             style={{
-              width: '60px',
-              height: '60px',
-              border: '6px solid rgba(255,255,255,0.2)',
-              borderTop: '6px solid #fff',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
+              color: '#ffffff',
+              whiteSpace: 'pre',
+              letterSpacing: '0.1em',
+              opacity: 0.9
             }}
-          />
+          >
+            {getAsciiArt()}
+          </pre>
         </div>
 
         {/* Progress text */}
-        <p className="text-xl" style={{ opacity: 0.9 }}>
+        <p className="text-xl mt-8" style={{ opacity: 0.9 }}>
           {progress}
         </p>
+
+        {/* Loading dots animation */}
+        <div className="mt-4 text-2xl tracking-widest">
+          <span className="dot-1">.</span>
+          <span className="dot-2">.</span>
+          <span className="dot-3">.</span>
+        </div>
       </div>
 
       <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        @keyframes blink1 {
+          0%, 100% { opacity: 0; }
+          33% { opacity: 1; }
+        }
+        @keyframes blink2 {
+          0%, 100% { opacity: 0; }
+          66% { opacity: 1; }
+        }
+        @keyframes blink3 {
+          0%, 33% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        .dot-1 {
+          animation: blink1 1.4s infinite;
+        }
+        .dot-2 {
+          animation: blink2 1.4s infinite;
+        }
+        .dot-3 {
+          animation: blink3 1.4s infinite;
         }
       `}</style>
     </div>
