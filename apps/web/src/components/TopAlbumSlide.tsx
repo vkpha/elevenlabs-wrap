@@ -21,7 +21,7 @@ export function TopAlbumSlide({ album, bgColor }: TopAlbumSlideProps) {
           transition={{ delay: 0.2, duration: 0.6 }}
         >
           <h2 className="text-3xl mb-12 text-black font-black">
-            YOUR TOP GENERATED ALBUM
+            THE ALBUM BEST RESEMBLING YOUR TASTE
           </h2>
         </motion.div>
 
@@ -36,19 +36,6 @@ export function TopAlbumSlide({ album, bgColor }: TopAlbumSlideProps) {
             <p className="text-4xl text-black relative z-10 text-center italic font-black">
               {album}
             </p>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.6 }}
-          className="mt-8"
-        >
-          <div className="flex gap-3 items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-black" />
-            <div className="w-3 h-3 rounded-full bg-black/50" />
-            <div className="w-3 h-3 rounded-full bg-black/50" />
           </div>
         </motion.div>
       </motion.div>
