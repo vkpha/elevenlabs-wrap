@@ -58,6 +58,8 @@ export default function App() {
     return 'login';
   });
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const [trackUrls, setTrackUrls] = useState<string[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const slides = [
     <IntroSlide genreCount={mockData.genreCount} />,
@@ -93,11 +95,58 @@ export default function App() {
   };
 
   // Handler for when loading completes
-  const handleLoadingComplete = (analysis: any) => {
+  const handleLoadingComplete = (analysis: any, urls: string[]) => {
     setAnalysisData(analysis);
+    setTrackUrls(urls);
     window.location.hash = '#slides';
     setAppState('slides');
   };
+
+  // Play audio for current slide
+  useEffect(() => {
+    if (appState !== 'slides' || trackUrls.length === 0) return;
+
+    const trackIndex = currentSlide % trackUrls.length;
+    const trackUrl = trackUrls[trackIndex];
+
+    if (!trackUrl) return;
+
+    // Create or update audio element
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.5;
+    }
+
+    // Fade out previous, load new, fade in
+    const audio = audioRef.current;
+
+    const fadeOut = setInterval(() => {
+      if (audio.volume > 0.05) {
+        audio.volume = Math.max(0, audio.volume - 0.05);
+      } else {
+        clearInterval(fadeOut);
+        audio.pause();
+        audio.src = trackUrl;
+        audio.load();
+        audio.volume = 0;
+
+        audio.play().then(() => {
+          const fadeIn = setInterval(() => {
+            if (audio.volume < 0.45) {
+              audio.volume = Math.min(0.5, audio.volume + 0.05);
+            } else {
+              clearInterval(fadeIn);
+            }
+          }, 50);
+        }).catch(err => console.error('Audio playback failed:', err));
+      }
+    }, 50);
+
+    return () => {
+      clearInterval(fadeOut);
+    };
+  }, [currentSlide, appState, trackUrls]);
 
   useEffect(() => {
     // Check if returning from Spotify auth

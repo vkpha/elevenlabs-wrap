@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 const API_BASE = 'http://127.0.0.1:3001';
 
 interface LoadingScreenProps {
-  onComplete: (analysisData: any) => void;
+  onComplete: (analysisData: any, trackUrls: string[]) => void;
 }
 
 export function LoadingScreen({ onComplete }: LoadingScreenProps) {
@@ -78,9 +78,14 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
           if (line.startsWith('data: ')) {
             const data = JSON.parse(line.slice(6));
             if (data.type === 'complete') {
+              // Fetch track URLs
+              const tracksResponse = await fetch(`${API_BASE}/music/tracks`, { credentials: 'include' });
+              const tracksData = await tracksResponse.json();
+              const trackUrls = tracksData.tracks.map((t: any) => `${API_BASE}${t.url}`);
+
               // All done, notify parent
               setProgress('Complete! Starting your wrapped...');
-              setTimeout(() => onComplete(aiData.analysis), 1000);
+              setTimeout(() => onComplete(aiData.analysis, trackUrls), 1000);
             } else if (data.current) {
               setProgress(`Generating track ${data.current}/${data.total}...`);
             }

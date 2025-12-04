@@ -1,7 +1,13 @@
 import express from 'express';
 import { elevenLabsService } from '../modules/music-generation/elevenLabsService.js';
 import { spotifyStatsService } from '../modules/wrap-stats/spotifyStatsService.js';
+import { readdir } from 'fs/promises';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const router = express.Router();
 
 /**
@@ -174,6 +180,57 @@ router.post('/expand-track', requireAuth, async (req, res) => {
       error: 'Failed to expand track',
       message: error.message
     });
+  }
+});
+
+/**
+ * Get list of generated tracks
+ * GET /music/tracks
+ */
+router.get('/tracks', requireAuth, async (req, res) => {
+  try {
+    const musicDir = join(__dirname, '../../.cache/generated-music');
+    const files = await readdir(musicDir);
+
+    // Filter and sort mp3 files
+    const tracks = files
+      .filter(f => f.endsWith('.mp3'))
+      .sort((a, b) => {
+        // Extract track numbers from filenames like "track-1-preview-123456.mp3"
+        const aMatch = a.match(/track-(\d+)/);
+        const bMatch = b.match(/track-(\d+)/);
+        const aNum = aMatch ? parseInt(aMatch[1]) : 0;
+        const bNum = bMatch ? parseInt(bMatch[1]) : 0;
+        return aNum - bNum;
+      })
+      .map(filename => ({
+        filename,
+        url: `/music/audio/${filename}`
+      }));
+
+    res.json({ tracks });
+  } catch (error) {
+    console.error('Error reading tracks:', error.message);
+    res.status(500).json({ error: 'Failed to read tracks' });
+  }
+});
+
+/**
+ * Serve audio files
+ * GET /music/audio/:filename
+ */
+router.get('/audio/:filename', requireAuth, (req, res) => {
+  try {
+    const { filename } = req.params;
+    const musicDir = join(__dirname, '../../.cache/generated-music');
+    const filepath = join(musicDir, filename);
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.sendFile(filepath);
+  } catch (error) {
+    console.error('Error serving audio:', error.message);
+    res.status(404).json({ error: 'Audio file not found' });
   }
 });
 
