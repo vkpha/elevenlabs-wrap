@@ -20,27 +20,62 @@ import bg8 from '../../../assets/eleven_labs_background_8.mp4';
 import { LoginPage } from './components/LoginPage';
 import { LoadingScreen } from './components/LoadingScreen';
 
-const mockData = {
-  genreCount: 127,
-  topGenres: ['Audiobook Narration', 'Podcast Voiceover', 'Character Voice Acting', 'Documentary Narration', 'ASMR'],
-  listeningAge: 34,
-  topSong: 'Midnight Stories',
-  topSongs: [
-    { title: 'Midnight Stories', plays: 2847 },
-    { title: 'The Last Chapter', plays: 2156 },
-    { title: 'Whispers in the Dark', plays: 1923 },
-    { title: 'Digital Dreams', plays: 1765 },
-    { title: 'Echoes of Tomorrow', plays: 1542 }
-  ],
-  albumCount: 89,
-  topAlbum: 'Synthetic Emotions',
-  topAlbums: [
-    { title: 'Synthetic Emotions', artist: 'AI Narrator', plays: 5234 },
-    { title: 'Voice Chronicles', artist: 'Digital Storyteller', plays: 4892 },
-    { title: 'Spoken Word Dreams', artist: 'Neural Voice', plays: 4156 },
-    { title: 'Audio Landscapes', artist: 'Generated Voices', plays: 3847 },
-    { title: 'The Infinite Library', artist: 'AI Ensemble', plays: 3621 }
-  ]
+// Helper function to parse wrapped data into slide format
+const parseWrappedData = (analysis: any) => {
+  if (!analysis) {
+    // Fallback to mock data if no analysis available
+    return {
+      genreCount: 127,
+      topGenres: ['Audiobook Narration', 'Podcast Voiceover', 'Character Voice Acting', 'Documentary Narration', 'ASMR'],
+      listeningAge: 34,
+      topSong: 'Midnight Stories',
+      topSongs: [
+        { title: 'Midnight Stories', plays: 2847 },
+        { title: 'The Last Chapter', plays: 2156 },
+        { title: 'Whispers in the Dark', plays: 1923 },
+        { title: 'Digital Dreams', plays: 1765 },
+        { title: 'Echoes of Tomorrow', plays: 1542 }
+      ],
+      albumCount: 89,
+      topAlbum: 'Synthetic Emotions',
+      topAlbums: [
+        { title: 'Synthetic Emotions', artist: 'AI Narrator', plays: 5234 },
+        { title: 'Voice Chronicles', artist: 'Digital Storyteller', plays: 4892 },
+        { title: 'Spoken Word Dreams', artist: 'Neural Voice', plays: 4156 },
+        { title: 'Audio Landscapes', artist: 'Generated Voices', plays: 3847 },
+        { title: 'The Infinite Library', artist: 'AI Ensemble', plays: 3621 }
+      ]
+    };
+  }
+
+  // Map AI analysis to slide data format
+  const musicPrompts = analysis.musicPrompts || [];
+  const recommendedAlbums = analysis.recommendedAlbums || [];
+
+  return {
+    genreCount: analysis.genreCount || 0,
+    topGenres: analysis.topGenres || [],
+    listeningAge: analysis.estimatedAge || 25,
+    topSong: musicPrompts[0]?.title || 'Unknown Track',
+    topSongs: musicPrompts.slice(0, 5).map((track: any, index: number) => ({
+      title: track.title,
+      plays: 3000 - (index * 200) // Generate decreasing play counts
+    })),
+    albumCount: recommendedAlbums.length + 1, // +1 for personal album
+    topAlbum: analysis.personalAlbumTitle || 'Your Personal Album',
+    topAlbums: [
+      {
+        title: analysis.personalAlbumTitle || 'Your Personal Album',
+        artist: analysis.personalAlbumArtist || 'Your AI',
+        plays: 5000
+      },
+      ...recommendedAlbums.slice(0, 4).map((album: any, index: number) => ({
+        title: album.title,
+        artist: 'Your AI',
+        plays: 4500 - (index * 300)
+      }))
+    ]
+  };
 };
 
 export default function App() {
@@ -64,15 +99,18 @@ export default function App() {
   const videoSources = [bg1, bg2, bg3, bg4, bg5, bg6, bg7, bg8];
   const textPalette = ['#39ff14', '#ff914d', '#7dd3ff', '#a855f7', '#ff5fa0', '#ff6b6b', '#1f4b99', '#0f7b3f'];
 
+  // Parse wrapped data for slides
+  const slideData = parseWrappedData(analysisData);
+
   const slides = [
-    <IntroSlide genreCount={mockData.genreCount} bgColor={textPalette[0]} />,
-    <TopGenresSlide genres={mockData.topGenres} bgColor={textPalette[1]} />,
-    <ListeningAgeSlide age={mockData.listeningAge} bgColor={textPalette[2]} />,
-    <GuessTopSongSlide songTitle={mockData.topSong} bgColor={textPalette[3]} />,
-    <TopSongsSlide songs={mockData.topSongs} bgColor={textPalette[4]} />,
-    <AlbumsCountSlide count={mockData.albumCount} bgColor={textPalette[5]} />,
-    <TopAlbumSlide album={mockData.topAlbum} bgColor={textPalette[6]} />,
-    <TopAlbumsSlide albums={mockData.topAlbums} bgColor={textPalette[7]} />
+    <IntroSlide genreCount={slideData.genreCount} bgColor={textPalette[0]} />,
+    <TopGenresSlide genres={slideData.topGenres} bgColor={textPalette[1]} />,
+    <ListeningAgeSlide age={slideData.listeningAge} bgColor={textPalette[2]} />,
+    <GuessTopSongSlide songTitle={slideData.topSong} bgColor={textPalette[3]} />,
+    <TopSongsSlide songs={slideData.topSongs} bgColor={textPalette[4]} />,
+    <AlbumsCountSlide count={slideData.albumCount} bgColor={textPalette[5]} />,
+    <TopAlbumSlide album={slideData.topAlbum} bgColor={textPalette[6]} />,
+    <TopAlbumsSlide albums={slideData.topAlbums} bgColor={textPalette[7]} />
   ];
 
   const goToSlide = (index: number) => {
