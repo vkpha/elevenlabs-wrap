@@ -1,11 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { storageService } from '../../lib/storageService.js';
 
 /**
  * Service for AI-powered music analysis using Claude
@@ -16,7 +12,8 @@ class AIAnalysisService {
     this.anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
-    this.dataDir = join(__dirname, '../../../data');
+    // Use the same data directory as storageService for cross-platform compatibility
+    this.dataDir = storageService.dataDir;
   }
 
   /**
