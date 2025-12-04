@@ -16,15 +16,22 @@ class ElevenLabsService {
     this.client = new ElevenLabsClient({
       apiKey: process.env.ELEVENLABS_API_KEY,
     });
-    this.outputDir = join(__dirname, '../../../.cache/generated-music');
+    this.baseCacheDir = join(__dirname, '../../../.cache');
+    this.usersDir = join(this.baseCacheDir, 'users');
+    this.outputDir = join(this.baseCacheDir, 'generated-music'); // Legacy shared directory
     this.ensureOutputDirectory();
   }
 
-  async ensureOutputDirectory() {
-    if (!existsSync(this.outputDir)) {
-      await mkdir(this.outputDir, { recursive: true });
-      console.log('📁 Created music output directory:', this.outputDir);
+  async ensureOutputDirectory(userId = null) {
+    const targetDir = userId ? this.getUserMusicDir(userId) : this.outputDir;
+    if (!existsSync(targetDir)) {
+      await mkdir(targetDir, { recursive: true });
+      console.log('📁 Created music output directory:', targetDir);
     }
+  }
+
+  getUserMusicDir(userId) {
+    return join(this.usersDir, userId, 'music');
   }
 
   /**
@@ -33,8 +40,9 @@ class ElevenLabsService {
    * @param {string|object} promptOrObject - The music generation prompt (string or {title, prompt})
    * @param {number} index - Track index
    * @param {number} durationSeconds - Duration in seconds (default: 20 for preview)
+   * @param {string} userId - Optional user ID for user-specific storage
    */
-  async generateTrack(promptOrObject, index = 0, durationSeconds = 20) {
+  async generateTrack(promptOrObject, index = 0, durationSeconds = 20, userId = null) {
     // Handle both string prompts and {title, prompt} objects
     const title = typeof promptOrObject === 'object' ? promptOrObject.title : null;
     const prompt = typeof promptOrObject === 'object' ? promptOrObject.prompt : promptOrObject;
@@ -44,7 +52,8 @@ class ElevenLabsService {
 
     try {
       // Ensure directory exists before writing
-      await this.ensureOutputDirectory();
+      await this.ensureOutputDirectory(userId);
+      const outputDir = userId ? this.getUserMusicDir(userId) : this.outputDir;
 
       const durationMs = durationSeconds * 1000;
       const isPreview = durationSeconds <= 30;
@@ -92,7 +101,7 @@ class ElevenLabsService {
       // Save to file with preview indicator in filename
       const previewSuffix = isPreview ? '-preview' : '';
       const filename = `track-${index + 1}${previewSuffix}-${Date.now()}.mp3`;
-      const filepath = join(this.outputDir, filename);
+      const filepath = join(outputDir, filename);
       await writeFile(filepath, audioBuffer);
 
       console.log(`✅ Track ${index + 1} generated: ${filename} (${durationSeconds}s)`);
@@ -123,8 +132,9 @@ class ElevenLabsService {
    * @param {Array} prompts - Array of music generation prompts (first 5 for previews)
    * @param {Function} onProgress - Progress callback function
    * @param {number} durationSeconds - Duration in seconds (default: 20 for preview)
+   * @param {string} userId - Optional user ID for user-specific storage
    */
-  async generateMultipleTracks(prompts, onProgress = null, durationSeconds = 20) {
+  async generateMultipleTracks(prompts, onProgress = null, durationSeconds = 20, userId = null) {
     const isPreview = durationSeconds <= 30;
     // Only generate first 8 prompts for previews
     const promptsToGenerate = isPreview ? prompts.slice(0, 8) : prompts;
@@ -133,7 +143,7 @@ class ElevenLabsService {
     const results = [];
 
     for (let i = 0; i < promptsToGenerate.length; i++) {
-      const result = await this.generateTrack(promptsToGenerate[i], i, durationSeconds);
+      const result = await this.generateTrack(promptsToGenerate[i], i, durationSeconds, userId);
       results.push(result);
 
       // Call progress callback if provided

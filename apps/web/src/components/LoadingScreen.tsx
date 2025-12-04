@@ -4,9 +4,10 @@ const API_BASE = 'http://127.0.0.1:3001';
 
 interface LoadingScreenProps {
   onComplete: (analysisData: any, trackUrls: string[]) => void;
+  forceRegenerate?: boolean;
 }
 
-export function LoadingScreen({ onComplete }: LoadingScreenProps) {
+export function LoadingScreen({ onComplete, forceRegenerate = false }: LoadingScreenProps) {
   const [progress, setProgress] = useState('Initializing...');
 
   useEffect(() => {
@@ -15,6 +16,39 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
   const startDataFlow = async () => {
     try {
+      // Step 0: Handle force regenerate
+      if (forceRegenerate) {
+        setProgress('Clearing old data...');
+        await fetch(`${API_BASE}/wrapped/cache`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+      } else {
+        // Check if user has cached data
+        setProgress('Checking for existing wrapped data...');
+        const cacheCheckResponse = await fetch(`${API_BASE}/wrapped/check`, { credentials: 'include' });
+        const cacheCheck = await cacheCheckResponse.json();
+
+        if (cacheCheck.hasCachedData) {
+          // User already has generated wrapped, load it directly
+          setProgress('Loading your existing wrapped...');
+          const cachedResponse = await fetch(`${API_BASE}/wrapped/cached`, { credentials: 'include' });
+          const cachedData = await cachedResponse.json();
+
+          if (cachedData.success && cachedData.data) {
+            // Fetch track URLs
+            const tracksResponse = await fetch(`${API_BASE}/music/tracks`, { credentials: 'include' });
+            const tracksData = await tracksResponse.json();
+            const trackUrls = tracksData.tracks.map((t: any) => `${API_BASE}${t.url}`);
+
+            setProgress('Complete! Loading your wrapped...');
+            setTimeout(() => onComplete(cachedData.data.analysis, trackUrls), 500);
+            return;
+          }
+        }
+      }
+
+      // No cached data, proceed with full generation flow
       // Step 1: Fetch Spotify data
       setProgress('Fetching your Spotify data...');
       await Promise.all([

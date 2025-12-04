@@ -59,6 +59,14 @@ class AuthService {
   async authenticateUser(session, code) {
     const tokens = await this.exchangeCodeForToken(code);
     spotifyStatsService.setTokens(session, tokens.accessToken, tokens.refreshToken);
+
+    // Fetch and store user profile (including Spotify user ID)
+    const userProfile = await spotifyStatsService.getUserProfile(session);
+    session.spotifyUserId = userProfile.id;
+    session.spotifyDisplayName = userProfile.display_name;
+
+    console.log(`✅ Authenticated user: ${userProfile.display_name} (${userProfile.id})`);
+
     return tokens;
   }
 

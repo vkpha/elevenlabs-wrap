@@ -6,6 +6,7 @@ import authRoutes from './src/routes/authRoutes.js';
 import statsRoutes from './src/routes/statsRoutes.js';
 import aiRoutes from './src/routes/aiRoutes.js';
 import musicRoutes from './src/routes/musicRoutes.js';
+import wrappedRoutes from './src/routes/wrappedRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +43,7 @@ app.use('/auth', authRoutes);
 app.use('/stats', statsRoutes);
 app.use('/ai', aiRoutes);
 app.use('/music', musicRoutes);
+app.use('/wrapped', wrappedRoutes);
 
 // 404 handler
 app.use((req, res) => {

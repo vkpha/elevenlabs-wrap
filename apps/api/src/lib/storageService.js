@@ -10,12 +10,34 @@ class StorageService {
   constructor() {
     // Use local cache directory (will be .gitignored)
     // For production: this would be replaced with S3, Redis, or database storage
-    this.dataDir = join(__dirname, '../../.cache/music-data');
+    this.baseCacheDir = join(__dirname, '../../.cache');
+    this.dataDir = join(this.baseCacheDir, 'music-data');
+    this.usersDir = join(this.baseCacheDir, 'users');
     console.log('📁 Data cache directory:', this.dataDir);
+    console.log('📁 Users cache directory:', this.usersDir);
     this.ensureDataDirectory();
+    this.ensureUsersDirectory();
 
     // Auto-cleanup old files (optional - keeps last 24 hours)
     this.cleanupOldFiles();
+  }
+
+  async ensureUsersDirectory() {
+    if (!existsSync(this.usersDir)) {
+      await mkdir(this.usersDir, { recursive: true });
+    }
+  }
+
+  getUserCacheDir(userId) {
+    return join(this.usersDir, userId);
+  }
+
+  async ensureUserDirectory(userId) {
+    const userDir = this.getUserCacheDir(userId);
+    if (!existsSync(userDir)) {
+      await mkdir(userDir, { recursive: true });
+    }
+    return userDir;
   }
 
   async cleanupOldFiles() {
@@ -116,6 +138,72 @@ class StorageService {
       long_term: 'All time'
     };
     return descriptions[timeRange] || timeRange;
+  }
+
+  /**
+   * Save user's complete wrapped data (AI analysis + track info)
+   */
+  async saveUserWrappedData(userId, wrappedData) {
+    const userDir = await this.ensureUserDirectory(userId);
+    const filepath = join(userDir, 'wrapped-data.json');
+
+    const data = {
+      userId,
+      timestamp: new Date().toISOString(),
+      ...wrappedData
+    };
+
+    await writeFile(filepath, JSON.stringify(data, null, 2));
+    console.log(`✅ Saved wrapped data for user: ${userId}`);
+    return filepath;
+  }
+
+  /**
+   * Get user's wrapped data if it exists
+   */
+  async getUserWrappedData(userId) {
+    const userDir = this.getUserCacheDir(userId);
+    const filepath = join(userDir, 'wrapped-data.json');
+
+    if (!existsSync(filepath)) {
+      return null;
+    }
+
+    try {
+      const content = await import('fs').then(fs => fs.promises.readFile(filepath, 'utf-8'));
+      return JSON.parse(content);
+    } catch (error) {
+      console.error(`Error reading wrapped data for ${userId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Check if user has cached wrapped data
+   */
+  hasUserWrappedData(userId) {
+    const userDir = this.getUserCacheDir(userId);
+    const filepath = join(userDir, 'wrapped-data.json');
+    return existsSync(filepath);
+  }
+
+  /**
+   * Clear user's cached data (for regeneration)
+   */
+  async clearUserCache(userId) {
+    const userDir = this.getUserCacheDir(userId);
+
+    if (!existsSync(userDir)) {
+      return;
+    }
+
+    try {
+      const files = await readdir(userDir);
+      await Promise.all(files.map(file => unlink(join(userDir, file))));
+      console.log(`🗑️  Cleared cache for user: ${userId}`);
+    } catch (error) {
+      console.error(`Error clearing cache for ${userId}:`, error);
+    }
   }
 }
 

@@ -1,6 +1,8 @@
 import express from 'express';
 import { elevenLabsService } from '../modules/music-generation/elevenLabsService.js';
 import { spotifyStatsService } from '../modules/wrap-stats/spotifyStatsService.js';
+import { storageService } from '../lib/storageService.js';
+import { aiAnalysisService } from '../modules/ai-analysis/aiAnalysisService.js';
 import { readdir } from 'fs/promises';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
@@ -95,6 +97,7 @@ router.post('/generate-from-analysis', requireAuth, async (req, res) => {
     }
 
     const { analysis, duration = 20 } = req.body;
+    const userId = req.session.spotifyUserId;
 
     if (!analysis || !analysis.musicPrompts) {
       return res.status(400).json({
@@ -107,20 +110,34 @@ router.post('/generate-from-analysis', requireAuth, async (req, res) => {
     const isPreview = duration <= 10;
 
     console.log(`\n🎵 Generating ${prompts.length} ${isPreview ? 'preview' : 'full'} tracks from analysis...`);
+    if (userId) {
+      console.log(`👤 User: ${userId}`);
+    }
 
     // Set up SSE
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    // Generate tracks with specified duration
+    // Generate tracks with specified duration (pass userId for user-specific storage)
     const result = await elevenLabsService.generateMultipleTracks(
       prompts,
       (progress) => {
         res.write(`data: ${JSON.stringify(progress)}\n\n`);
       },
-      duration
+      duration,
+      userId
     );
+
+    // Save complete wrapped data to user cache
+    if (userId) {
+      await storageService.saveUserWrappedData(userId, {
+        analysis,
+        trackResults: result.results,
+        duration,
+        generatedAt: new Date().toISOString()
+      });
+    }
 
     res.write(`data: ${JSON.stringify({ type: 'complete', ...result })}\n\n`);
     res.end();
@@ -184,12 +201,22 @@ router.post('/expand-track', requireAuth, async (req, res) => {
 });
 
 /**
- * Get list of generated tracks
+ * Get list of generated tracks (user-specific)
  * GET /music/tracks
  */
 router.get('/tracks', requireAuth, async (req, res) => {
   try {
-    const musicDir = join(__dirname, '../../.cache/generated-music');
+    const userId = req.session.spotifyUserId;
+
+    // Determine which directory to read from
+    let musicDir;
+    if (userId) {
+      musicDir = elevenLabsService.getUserMusicDir(userId);
+    } else {
+      // Fallback to legacy shared directory
+      musicDir = join(__dirname, '../../.cache/generated-music');
+    }
+
     const files = await readdir(musicDir);
 
     // Filter and sort mp3 files
@@ -208,7 +235,7 @@ router.get('/tracks', requireAuth, async (req, res) => {
         url: `/music/audio/${filename}`
       }));
 
-    res.json({ tracks });
+    res.json({ tracks, userId });
   } catch (error) {
     console.error('Error reading tracks:', error.message);
     res.status(500).json({ error: 'Failed to read tracks' });
@@ -216,13 +243,23 @@ router.get('/tracks', requireAuth, async (req, res) => {
 });
 
 /**
- * Serve audio files
+ * Serve audio files (user-specific)
  * GET /music/audio/:filename
  */
 router.get('/audio/:filename', requireAuth, (req, res) => {
   try {
     const { filename } = req.params;
-    const musicDir = join(__dirname, '../../.cache/generated-music');
+    const userId = req.session.spotifyUserId;
+
+    // Determine which directory to serve from
+    let musicDir;
+    if (userId) {
+      musicDir = elevenLabsService.getUserMusicDir(userId);
+    } else {
+      // Fallback to legacy shared directory
+      musicDir = join(__dirname, '../../.cache/generated-music');
+    }
+
     const filepath = join(musicDir, filename);
 
     res.setHeader('Content-Type', 'audio/mpeg');
