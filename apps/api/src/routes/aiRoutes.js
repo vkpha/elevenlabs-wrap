@@ -27,7 +27,16 @@ router.post('/guess-music-age', requireAuth, async (req, res) => {
       });
     }
 
-    const result = await aiAnalysisService.guessMusicAge();
+    // Get user ID from session
+    const userId = req.session.spotifyUserId;
+
+    if (!userId) {
+      return res.status(400).json({
+        error: 'User ID not found in session'
+      });
+    }
+
+    const result = await aiAnalysisService.guessMusicAge(userId);
 
     res.json(result);
   } catch (error) {

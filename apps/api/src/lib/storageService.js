@@ -75,17 +75,27 @@ class StorageService {
     return `${prefix}-${timestamp}.json`;
   }
 
-  async saveToJson(data, prefix, metadata = {}) {
-    await this.ensureDataDirectory();
+  async saveToJson(data, prefix, metadata = {}, userId = null) {
+    // If userId is provided, save to user-specific directory
+    let targetDir, filepath;
 
-    const filename = this.generateFileName(prefix);
-    const filepath = join(this.dataDir, filename);
+    if (userId) {
+      targetDir = await this.ensureUserDirectory(userId);
+      const filename = this.generateFileName(prefix);
+      filepath = join(targetDir, filename);
+    } else {
+      // Fallback to shared directory for backward compatibility
+      await this.ensureDataDirectory();
+      const filename = this.generateFileName(prefix);
+      filepath = join(this.dataDir, filename);
+    }
 
     const fileData = {
       metadata: {
         timestamp: new Date().toISOString(),
         type: prefix,
         itemCount: this.getItemCount(data),
+        userId: userId || 'shared',
         ...metadata
       },
       data
@@ -95,7 +105,7 @@ class StorageService {
 
     return {
       success: true,
-      filename,
+      filename: filepath.split('/').pop(),
       filepath,
       itemCount: fileData.metadata.itemCount
     };
@@ -111,24 +121,24 @@ class StorageService {
     return 0;
   }
 
-  async saveTopArtists(data, timeRange = 'short_term') {
+  async saveTopArtists(data, timeRange = 'short_term', userId = null) {
     return this.saveToJson(data, 'top-artists', {
       timeRange,
       description: this.getTimeRangeDescription(timeRange)
-    });
+    }, userId);
   }
 
-  async saveTopTracks(data, timeRange = 'short_term') {
+  async saveTopTracks(data, timeRange = 'short_term', userId = null) {
     return this.saveToJson(data, 'top-tracks', {
       timeRange,
       description: this.getTimeRangeDescription(timeRange)
-    });
+    }, userId);
   }
 
-  async saveRecentlyPlayed(data) {
+  async saveRecentlyPlayed(data, userId = null) {
     return this.saveToJson(data, 'recently-played', {
       description: 'Last 50 played tracks'
-    });
+    }, userId);
   }
 
   getTimeRangeDescription(timeRange) {
