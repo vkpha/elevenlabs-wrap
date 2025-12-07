@@ -12,7 +12,9 @@
     "dev:api": "npm start --workspace=@elevenlabs-wrap/api",
     "dev:web": "npm run dev --workspace=@elevenlabs-wrap/web",
     "start:api": "npm start --workspace=@elevenlabs-wrap/api",
-    "start:web": "npm start --workspace=@elevenlabs-wrap/web"
+    "start:web": "npm start --workspace=@elevenlabs-wrap/web",
+    "build": "npm run build --workspace=@elevenlabs-wrap/web",
+    "start": "npm start --workspace=@elevenlabs-wrap/api"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

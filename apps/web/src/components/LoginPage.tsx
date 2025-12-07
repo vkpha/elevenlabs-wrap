@@ -1,8 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import loginBg from '../../../../assets/eleven_labs_background_login.mp4';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001';
+import { API_BASE } from '../config';
 
 export function LoginPage() {
   const handleSpotifyLogin = () => {
