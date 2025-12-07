@@ -17,13 +17,22 @@ class AIAnalysisService {
   }
 
   /**
-   * Get the three most recent JSON files from the data directory
+   * Get the three most recent JSON files from the data directory for a specific user
    */
-  async getRecentDataFiles() {
+  async getRecentDataFiles(userId = null) {
     try {
-      const files = await readdir(this.dataDir);
+      // Determine which directory to read from
+      let targetDir;
+      if (userId) {
+        targetDir = storageService.getUserCacheDir(userId);
+      } else {
+        targetDir = this.dataDir;
+      }
+
+      const files = await readdir(targetDir);
       const jsonFiles = files
         .filter(file => file.endsWith('.json'))
+        .filter(file => !file.includes('wrapped-data')) // Exclude wrapped data cache
         .sort((a, b) => {
           // Sort by timestamp in filename (newest first)
           return b.localeCompare(a);
@@ -39,7 +48,7 @@ class AIAnalysisService {
       // Read the content of these files
       const filesData = await Promise.all(
         recentFiles.map(async (filename) => {
-          const filepath = join(this.dataDir, filename);
+          const filepath = join(targetDir, filename);
           const content = await readFile(filepath, 'utf-8');
           return {
             filename,
@@ -60,11 +69,12 @@ class AIAnalysisService {
   /**
    * Analyze music data and guess user's "music age"
    */
-  async guessMusicAge() {
-    // Get recent data files
-    const dataFiles = await this.getRecentDataFiles();
+  async guessMusicAge(userId = null) {
+    // Get recent data files for this specific user
+    const dataFiles = await this.getRecentDataFiles(userId);
 
     console.log('\n=== AI ANALYSIS DEBUG ===');
+    console.log('User ID:', userId || 'shared');
     console.log('Files found:', dataFiles.map(f => f.filename));
     console.log('Number of files:', dataFiles.length);
 

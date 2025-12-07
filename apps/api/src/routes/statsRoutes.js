@@ -98,9 +98,10 @@ router.post('/save-top-artists', requireAuth, async (req, res) => {
   try {
     const timeRange = req.body?.time_range || req.query.time_range || SPOTIFY_CONFIG.TIME_RANGES.SHORT_TERM;
     const limit = parseInt(req.body?.limit || req.query.limit) || SPOTIFY_CONFIG.LIMITS.MAX_ITEMS;
+    const userId = req.session.spotifyUserId;
 
     const data = await spotifyStatsService.getTopArtists(req.session, timeRange, limit);
-    const result = await storageService.saveTopArtists(data, timeRange);
+    const result = await storageService.saveTopArtists(data, timeRange, userId);
 
     res.json({
       success: true,
@@ -123,9 +124,10 @@ router.post('/save-top-tracks', requireAuth, async (req, res) => {
   try {
     const timeRange = req.body?.time_range || req.query.time_range || SPOTIFY_CONFIG.TIME_RANGES.SHORT_TERM;
     const limit = parseInt(req.body?.limit || req.query.limit) || SPOTIFY_CONFIG.LIMITS.MAX_ITEMS;
+    const userId = req.session.spotifyUserId;
 
     const data = await spotifyStatsService.getTopTracks(req.session, timeRange, limit);
-    const result = await storageService.saveTopTracks(data, timeRange);
+    const result = await storageService.saveTopTracks(data, timeRange, userId);
 
     res.json({
       success: true,
@@ -147,9 +149,10 @@ router.post('/save-top-tracks', requireAuth, async (req, res) => {
 router.post('/save-recently-played', requireAuth, async (req, res) => {
   try {
     const limit = parseInt(req.body?.limit || req.query.limit) || SPOTIFY_CONFIG.LIMITS.MAX_ITEMS;
+    const userId = req.session.spotifyUserId;
 
     const data = await spotifyStatsService.getRecentlyPlayed(req.session, limit);
-    const result = await storageService.saveRecentlyPlayed(data);
+    const result = await storageService.saveRecentlyPlayed(data, userId);
 
     res.json({
       success: true,
