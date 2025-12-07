@@ -50,6 +50,17 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'elevenlabs-wrap-api' });
 });
 
+// Debug endpoint for session (temporary)
+app.get('/debug/session', (req, res) => {
+  res.json({
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    isAuthenticated: !!req.session?.spotify?.accessToken,
+    spotifyUserId: req.session?.spotifyUserId || null,
+    cookies: req.headers.cookie || 'none'
+  });
+});
+
 // Mount routes
 app.use('/auth', authRoutes);
 app.use('/stats', statsRoutes);
