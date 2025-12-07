@@ -17,6 +17,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Trust proxy for Railway (required for secure cookies behind reverse proxy)
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
 // CORS configuration - only use 127.0.0.1
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://127.0.0.1:3000',
@@ -33,8 +38,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     httpOnly: true,
+    sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
