@@ -2,14 +2,20 @@ import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './src/routes/authRoutes.js';
 import statsRoutes from './src/routes/statsRoutes.js';
 import aiRoutes from './src/routes/aiRoutes.js';
 import musicRoutes from './src/routes/musicRoutes.js';
 import wrappedRoutes from './src/routes/wrappedRoutes.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+const isProduction = process.env.NODE_ENV === 'production';
 
 // CORS configuration - only use 127.0.0.1
 app.use(cors({
@@ -45,10 +51,21 @@ app.use('/ai', aiRoutes);
 app.use('/music', musicRoutes);
 app.use('/wrapped', wrappedRoutes);
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
+// In production, serve static files from the frontend build
+if (isProduction) {
+  const staticPath = path.join(__dirname, '../web/build');
+  app.use(express.static(staticPath));
+
+  // Handle client-side routing - serve index.html for all non-API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(staticPath, 'index.html'));
+  });
+} else {
+  // 404 handler for development (API-only mode)
+  app.use((req, res) => {
+    res.status(404).json({ error: 'Route not found' });
+  });
+}
 
 // Error handler
 app.use((err, req, res, next) => {

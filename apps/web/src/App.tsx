@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_BASE } from './config';
 import { IntroSlide } from './components/IntroSlide';
 import { TopGenresSlide } from './components/TopGenresSlide';
 import { ListeningAgeSlide } from './components/ListeningAgeSlide';
@@ -224,7 +225,7 @@ export default function App() {
         }
 
         // Try to verify if user is authenticated by checking backend
-        const response = await fetch('http://127.0.0.1:3001/auth/status', {
+        const response = await fetch(`${API_BASE}/auth/status`, {
           credentials: 'include'
         });
 
