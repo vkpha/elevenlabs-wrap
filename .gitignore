@@ -53,6 +53,7 @@ temp/
 !package.json
 !package-lock.json
 !tsconfig.json
+!railway.json
 
 # Test API
 test-api/node_modules/
